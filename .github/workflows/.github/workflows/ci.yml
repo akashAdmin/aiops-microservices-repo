@@ -2,15 +2,15 @@ name: Boutique CI Pipeline
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 
 env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         service:
@@ -26,19 +26,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region $AWS_REGION | \
-          docker login --username AWS \
-          --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com
-     
       - name: Build Docker Image
         run: |
           if [ "${{ matrix.service }}" == "frontend" ]; then
@@ -46,44 +39,35 @@ jobs:
           else
             BUILD_PATH="projects/boutique-microservices/backend/services/${{ matrix.service }}"
           fi
-
-          echo "Building from $BUILD_PATH"
-
           docker build \
-            -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ matrix.service }}:$IMAGE_TAG \
-          $BUILD_PATH
-
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/boutique-${{ matrix.service }}:$IMAGE_TAG \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/boutique-${{ matrix.service }}:latest \
+            $BUILD_PATH
 
       - name: Push Docker Image
         run: |
-          IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ matrix.service }}:${{ github.sha }}
-          echo "Pushing $IMAGE_URI"
-          docker push $IMAGE_URI
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/boutique-${{ matrix.service }}:$IMAGE_TAG
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/boutique-${{ matrix.service }}:latest
 
   update-manifests:
     runs-on: ubuntu-latest
     needs: build-and-push
     permissions:
       contents: write
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update image tags in k8s manifests
         run: |
           NEW_TAG=${{ github.sha }}
-          ACCOUNT=${{ secrets.AWS_ACCOUNT_ID }}
-          REGION=${{ secrets.AWS_REGION }}
-
+          DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
           for SERVICE in auth gateway orders order-service product-service user-service; do
             MANIFEST="gitops/k8s/backend/${SERVICE}.yml"
-            sed -i "s|${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/${SERVICE}:.*|${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/${SERVICE}:${NEW_TAG}|g" $MANIFEST
+            sed -i "s|${DOCKERHUB_USERNAME}/boutique-${SERVICE}:.*|${DOCKERHUB_USERNAME}/boutique-${SERVICE}:${NEW_TAG}|g" $MANIFEST
           done
-
-          sed -i "s|${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/frontend:.*|${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/frontend:${NEW_TAG}|g" gitops/k8s/frontend/deployment.yml
+          sed -i "s|${DOCKERHUB_USERNAME}/boutique-frontend:.*|${DOCKERHUB_USERNAME}/boutique-frontend:${NEW_TAG}|g" gitops/k8s/frontend/deployment.yml
 
       - name: Commit and push updated manifests
         run: |
@@ -92,4 +76,3 @@ jobs:
           git add gitops/k8s/
           git diff --staged --quiet || git commit -m "ci: update image tags to ${{ github.sha }}"
           git push
-
