@@ -42,7 +42,7 @@ const Login: React.FC = () => {
       >
         <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
           <Typography component="h1" variant="h4" align="center" gutterBottom>
-            Sign In
+            please sign in with your account
           </Typography>
           
           {error && (
