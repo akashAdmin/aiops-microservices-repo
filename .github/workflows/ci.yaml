@@ -10,7 +10,10 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: 24.04
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     strategy:
       matrix:
         service:
