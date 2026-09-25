@@ -1,4 +1,5 @@
 name: Boutique CI Pipeline
+# This workflow builds and pushes Docker images for the boutique microservices and updates the Kubernetes manifests with the new image tags.
 
 on:
   workflow_dispatch:
