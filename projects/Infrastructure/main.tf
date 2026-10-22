@@ -24,11 +24,11 @@ module "eks" {
   depends_on = [module.vpc]
 }
 
-module "ecr" {
-  source = "./modules/ecr"
+# module "ecr" {
+#   source = "./modules/ecr"
 
-  repositories = var.repositories
-}
+#   repositories = var.repositories
+# }
 
 
 data "aws_eks_cluster_auth" "eks" {
