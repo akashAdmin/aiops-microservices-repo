@@ -45,13 +45,12 @@ jobs:
           fi
           docker build \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/boutique-${{ matrix.service }}:$IMAGE_TAG \
-            -t ${{ secrets.DOCKERHUB_USERNAME }}/boutique-${{ matrix.service }}:latest \
             $BUILD_PATH
 
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/boutique-${{ matrix.service }}:$IMAGE_TAG
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/boutique-${{ matrix.service }}:latest
+        
 
   update-manifests:
     runs-on: ubuntu-latest
