@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    paths-ignore:
+      - 'gitops/**'
 
 env:
   IMAGE_TAG: ${{ github.sha }}
@@ -50,7 +52,6 @@ jobs:
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/boutique-${{ matrix.service }}:$IMAGE_TAG
-        
 
   update-manifests:
     runs-on: ubuntu-latest
@@ -71,23 +72,24 @@ jobs:
 
       - name: Update image tags in k8s manifests
         run: |
+          set -euo pipefail
           NEW_TAG=${{ github.sha }}
           DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
           for SERVICE in auth gateway orders order-service product-service user-service; do
             MANIFEST="gitops/k8s/backend/${SERVICE}.yml"
-            sed -i "s|${DOCKERHUB_USERNAME}/boutique-${SERVICE}:.*|${DOCKERHUB_USERNAME}/boutique-${SERVICE}:${NEW_TAG}|g" $MANIFEST
+            test -f "$MANIFEST"
+            sed -i "s|image: ${DOCKERHUB_USERNAME}/boutique-${SERVICE}:.*|image: ${DOCKERHUB_USERNAME}/boutique-${SERVICE}:${NEW_TAG}|" "$MANIFEST"
+            grep -qF "image: ${DOCKERHUB_USERNAME}/boutique-${SERVICE}:${NEW_TAG}" "$MANIFEST"
           done
-          sed -i "s|${DOCKERHUB_USERNAME}/boutique-frontend:.*|${DOCKERHUB_USERNAME}/boutique-frontend:${NEW_TAG}|g" gitops/k8s/frontend/deployment.yml
+          FRONTEND_MANIFEST="gitops/k8s/frontend/deployment.yml"
+          test -f "$FRONTEND_MANIFEST"
+          sed -i "s|image: ${DOCKERHUB_USERNAME}/boutique-frontend:.*|image: ${DOCKERHUB_USERNAME}/boutique-frontend:${NEW_TAG}|" "$FRONTEND_MANIFEST"
+          grep -qF "image: ${DOCKERHUB_USERNAME}/boutique-frontend:${NEW_TAG}" "$FRONTEND_MANIFEST"
 
       - name: Commit and push updated manifests
         run: |
           git add gitops/k8s/
-          git diff --staged --quiet || git commit -m "ci: update image tags to ${{ github.sha }}"
+          if ! git diff --staged --quiet; then
+            git commit -m "ci: update image tags to ${{ github.sha }}"
+          fi
           git push origin main
-
-
-## test
-
-
-
-           
