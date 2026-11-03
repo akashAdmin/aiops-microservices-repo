@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_TOKEN }}
           fetch-depth: 0
 
       - name: Configure Git Credentials
@@ -78,12 +78,12 @@ jobs:
           for SERVICE in auth gateway orders order-service product-service user-service; do
             MANIFEST="gitops/k8s/backend/${SERVICE}.yml"
             test -f "$MANIFEST"
-            sed -i "s|image: ${DOCKERHUB_USERNAME}/boutique-${SERVICE}:.*|image: ${DOCKERHUB_USERNAME}/boutique-${SERVICE}:${NEW_TAG}|" "$MANIFEST"
+            sed -i -E "s|image: ${DOCKERHUB_USERNAME}/boutique-${SERVICE}:.*|image: ${DOCKERHUB_USERNAME}/boutique-${SERVICE}:${NEW_TAG}|" "$MANIFEST"
             grep -qF "image: ${DOCKERHUB_USERNAME}/boutique-${SERVICE}:${NEW_TAG}" "$MANIFEST"
           done
           FRONTEND_MANIFEST="gitops/k8s/frontend/deployment.yml"
           test -f "$FRONTEND_MANIFEST"
-          sed -i "s|image: ${DOCKERHUB_USERNAME}/boutique-frontend:.*|image: ${DOCKERHUB_USERNAME}/boutique-frontend:${NEW_TAG}|" "$FRONTEND_MANIFEST"
+          sed -i -E "s|image: ${DOCKERHUB_USERNAME}/boutique-frontend:.*|image: ${DOCKERHUB_USERNAME}/boutique-frontend:${NEW_TAG}|" "$FRONTEND_MANIFEST"
           grep -qF "image: ${DOCKERHUB_USERNAME}/boutique-frontend:${NEW_TAG}" "$FRONTEND_MANIFEST"
 
       - name: Commit and push updated manifests
