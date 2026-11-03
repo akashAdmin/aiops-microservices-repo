@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: orders
-          image: akashadmin939/boutique-orders:75dd96cb88be59856dbd0138ce3486dbb4533e13
+          image: akashadmin939/boutique-orders:5b0fcb1a8c25aacb55c465d6ef4e654092b22f46
           ports:
             - containerPort: 3005
           env:
