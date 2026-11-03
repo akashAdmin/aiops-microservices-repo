@@ -1,12 +1,9 @@
 name: Boutique CI Pipeline
-# This workflow builds and pushes Docker images for the boutique microservices and updates the Kubernetes manifests with the new image tags.
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths-ignore:
-      - 'gitops/**'
 
 env:
   IMAGE_TAG: ${{ github.sha }}
@@ -14,9 +11,6 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     strategy:
       matrix:
         service:
@@ -30,10 +24,10 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v3.3.0
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -62,34 +56,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_TOKEN }}
-          fetch-depth: 0
-
-      - name: Configure Git Credentials
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git checkout main || git checkout -b main
 
       - name: Update image tags in k8s manifests
         run: |
-          set -euo pipefail
           NEW_TAG=${{ github.sha }}
           DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
           for SERVICE in auth gateway orders order-service product-service user-service; do
             MANIFEST="gitops/k8s/backend/${SERVICE}.yml"
-            test -f "$MANIFEST"
-            sed -i -E "s|image: ${DOCKERHUB_USERNAME}/boutique-${SERVICE}:.*|image: ${DOCKERHUB_USERNAME}/boutique-${SERVICE}:${NEW_TAG}|" "$MANIFEST"
-            grep -qF "image: ${DOCKERHUB_USERNAME}/boutique-${SERVICE}:${NEW_TAG}" "$MANIFEST"
+            sed -i "s|${DOCKERHUB_USERNAME}/boutique-${SERVICE}:.*|${DOCKERHUB_USERNAME}/boutique-${SERVICE}:${NEW_TAG}|g" $MANIFEST
           done
-          FRONTEND_MANIFEST="gitops/k8s/frontend/deployment.yml"
-          test -f "$FRONTEND_MANIFEST"
-          sed -i -E "s|image: ${DOCKERHUB_USERNAME}/boutique-frontend:.*|image: ${DOCKERHUB_USERNAME}/boutique-frontend:${NEW_TAG}|" "$FRONTEND_MANIFEST"
-          grep -qF "image: ${DOCKERHUB_USERNAME}/boutique-frontend:${NEW_TAG}" "$FRONTEND_MANIFEST"
+          sed -i "s|${DOCKERHUB_USERNAME}/boutique-frontend:.*|${DOCKERHUB_USERNAME}/boutique-frontend:${NEW_TAG}|g" gitops/k8s/frontend/deployment.yml
 
       - name: Commit and push updated manifests
         run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
           git add gitops/k8s/
-          if ! git diff --staged --quiet; then
-            git commit -m "ci: update image tags to ${{ github.sha }}"
-          fi
-          git push origin main
+          git diff --staged --quiet || git commit -m "ci: update image tags to ${{ github.sha }}"
+          git push
