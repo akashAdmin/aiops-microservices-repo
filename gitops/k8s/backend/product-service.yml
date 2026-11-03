@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: product-service
-          image: akashadmin939/boutique-product-service:e6bf2de207cc64e233fe1837635792a13c04f0cd
+          image: akashadmin939/boutique-product-service:db4aac7840823adb612009cd275ea9bffdb83419
           ports:
             - containerPort: 3003
           env:
