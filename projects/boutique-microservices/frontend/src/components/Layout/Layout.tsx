@@ -40,7 +40,7 @@ const Layout: React.FC = () => {
     <Box>
       <Toolbar>
         <Typography variant="h6" noWrap component="div">
-          Boutique
+          Boutiques
         </Typography>
       </Toolbar>
       <List>
