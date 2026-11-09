@@ -48,3 +48,7 @@ spec:
       port: 3002
       targetPort: 3002
   type: ClusterIP
+
+
+
+

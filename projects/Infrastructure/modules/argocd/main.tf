@@ -25,7 +25,7 @@ terraform {
 resource "helm_release" "argocd" {
   name       = "argocd"
   namespace  = kubernetes_namespace_v1.argocd.metadata[0].name
-  repository = "https://argoproj.github.io/argo-helm"
+  repository = "oci://ghcr.io/argoproj/argo-helm"
   chart      = "argo-cd"
   version    = "6.7.0"
 
@@ -51,7 +51,7 @@ resource "helm_release" "monitoring" {
   name       = "kube-prometheus-stack"
   namespace  = kubernetes_namespace_v1.monitoring.metadata[0].name
 
-  repository = "https://prometheus-community.github.io/helm-charts"
+  repository = "oci://ghcr.io/prometheus-community/charts"
   chart      = "kube-prometheus-stack"
   version    = "56.21.0"
 

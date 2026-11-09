@@ -13,6 +13,7 @@ const PORT: number = Number(process.env.GATEWAY_PORT) || 3001;
 app.use(helmet());
 app.use(cors());
 
+
 setupMetrics(app, { serviceName: 'gateway', serviceVersion: '1.0.0' });
 
 app.use(metricsMiddleware);
