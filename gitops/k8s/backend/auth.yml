@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: auth
-          image: akashadmin939/boutique-auth:df3aff093a406c488046b1db9e5405cb647abb9a
+          image: akashadmin939/boutique-auth:66b6019df7702de4ca69e51505327ed9325d5820
           ports:
             - containerPort: 3002
           env:
