@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: akashadmin939/boutique-frontend:d1322b32f1aab6f04f1f69a09a409272f38741f8
+          image: akashadmin939/boutique-frontend:f7d0ec3f0598a476d2d6f3e6350123b53320a2e8
           ports:
             - containerPort: 3000
           env:
