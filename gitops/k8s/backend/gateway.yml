@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: akashadmin939/boutique-gateway:cb41236f13ed93c122d521a4709a70d0f28afede
+          image: akashadmin939/boutique-gateway:10fa2a641660d78f57bdf6e288cb6043ab8268ad
           ports:
             - containerPort: 3001
           env:
