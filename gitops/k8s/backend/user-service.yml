@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: akashadmin939/boutique-user-service:cb8508eadf91bce1d2f9635057bb9791d61f83b9
+          image: akashadmin939/boutique-user-service:c7760aab3b3de466702f820c2ab07ad6964583b0
           ports:
             - containerPort: 3006
           env:
